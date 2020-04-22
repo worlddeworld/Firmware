@@ -486,7 +486,21 @@ bool Logger::initialize_topics()
 		}
 	}
 
-	if (!logged_topics.initialize_logged_topics(sdlog_profile)) {
+	if (logged_topics.initialize_logged_topics(sdlog_profile)) {
+
+		// if no polling configured then use sensor_combined if Estimator Replay profile is enabled
+		if (_polling_topic_meta && (sdlog_profile & SDLogProfileMask::ESTIMATOR_REPLAY)) {
+			const auto &topics = orb_get_topics();
+
+			for (size_t i = 0; i < orb_topics_count(); i++) {
+				if (strcmp("sensor_combined", topics[i]->o_name) == 0) {
+					_polling_topic_meta = topics[i];
+					break;
+				}
+			}
+		}
+
+	} else {
 		return false;
 	}
 
